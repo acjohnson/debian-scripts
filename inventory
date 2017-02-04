@@ -55,15 +55,18 @@ REMOTE_COMPUTERS=$(grep ^host ~/.ssh/config | awk '{print $NF}')
 # Build unique sorted list of all computers
 ALL_COMPUTERS=$(echo -e "${VMs}\n${CTs}\n${HOST}\n${REMOTE_COMPUTERS}" | sort -u)
 
+# Debian distro names used in lsb_release command
+DEBIAN_DISTROS='debian|ubuntu|elementary|deepin'
+
 if [ "${DEBIAN}" == "true" ]; then
-  # Build Debian/Ubuntu/Proxmox list
-  ALL_COMPUTERS=$(echo -e ${ALL_COMPUTERS} | pdsh -w - "lsb_release -i" 2>&1 | egrep -i 'debian|ubuntu' | awk -F':' '{print $1}')
+  # Build Debian list
+  ALL_COMPUTERS=$(echo -e ${ALL_COMPUTERS} | pdsh -w - "lsb_release -i" 2>&1 | egrep -i "${DEBIAN_DISTROS}" | awk -F':' '{print $1}')
 elif [ "${REMOTE}" == "true" ]; then
   # Build remote list
   ALL_COMPUTERS=$REMOTE_COMPUTERS
 elif [ "${OTHER}" == "true" ]; then
   # Build other list
-  ALL_COMPUTERS=$(echo -e "${ALL_COMPUTERS}" | pdsh -w - "lsb_release -i" 2>&1 | egrep -vi 'debian|ubuntu' | awk -F':' '{print $1}')
+  ALL_COMPUTERS=$(echo -e "${ALL_COMPUTERS}" | pdsh -w - "lsb_release -i" 2>&1 | egrep -vi "${DEBIAN_DISTROS}" | awk -F':' '{print $1}')
 fi
 
 # Finally output the list of computers
