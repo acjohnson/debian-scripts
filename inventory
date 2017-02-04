@@ -10,6 +10,10 @@ case $key in
     DEBIAN='true'
     shift
     ;;
+    -r|--remote)
+    REMOTE='true'
+    shift
+    ;;
     -o|--other)
     OTHER='true'
     shift
@@ -20,38 +24,43 @@ esac
 shift
 done
 
-# Get VM and container proxmox IDs
-PVE_VM_IDs=$(qm list | grep running | awk '{print $1}')
-PVE_CT_IDs=$(pct list | grep running | awk '{print $1}')
+if [ -z $REMOTE ]; then
+  # Get VM and container proxmox IDs
+  PVE_VM_IDs=$(qm list | grep running | awk '{print $1}')
+  PVE_CT_IDs=$(pct list | grep running | awk '{print $1}')
 
-# Get VM names
-VMs=$(for PVE_VM_ID in $PVE_VM_IDs; do
-  qm status $PVE_VM_ID -verbose \
-  | grep 'name: ' \
-  | awk '{print $2}' \
-  | tr '[:upper:]' '[:lower:]';
-done)
+  # Get VM names
+  VMs=$(for PVE_VM_ID in $PVE_VM_IDs; do
+    qm status $PVE_VM_ID -verbose \
+    | grep 'name: ' \
+    | awk '{print $2}' \
+    | tr '[:upper:]' '[:lower:]';
+  done)
 
-# Get container names
-CTs=$(for PVE_CT_ID in $PVE_CT_IDs; do
-  pct status $PVE_CT_ID -verbose \
-  | grep 'name: ' \
-  | awk '{print $2}' \
-  | tr '[:upper:]' '[:lower:]';
-done)
+  # Get container names
+  CTs=$(for PVE_CT_ID in $PVE_CT_IDs; do
+    pct status $PVE_CT_ID -verbose \
+    | grep 'name: ' \
+    | awk '{print $2}' \
+    | tr '[:upper:]' '[:lower:]';
+  done)
 
-# Get proxmox hostname
-HOST=$(echo "${HOSTNAME}" | tr '[:upper:]' '[:lower:]')
+  # Get proxmox hostname
+  HOST=$(echo "${HOSTNAME}" | tr '[:upper:]' '[:lower:]')
+fi
 
 # Get remote computer names
-REMOTE=$(grep ^host ~/.ssh/config | awk '{print $NF}')
+REMOTE_COMPUTERS=$(grep ^host ~/.ssh/config | awk '{print $NF}')
 
 # Build unique sorted list of all computers
-ALL_COMPUTERS=$(echo -e "${VMs}\n${CTs}\n${HOST}\n${REMOTE}" | sort -u)
+ALL_COMPUTERS=$(echo -e "${VMs}\n${CTs}\n${HOST}\n${REMOTE_COMPUTERS}" | sort -u)
 
 if [ "${DEBIAN}" == "true" ]; then
   # Build Debian/Ubuntu/Proxmox list
   ALL_COMPUTERS=$(echo -e ${ALL_COMPUTERS} | pdsh -w - "lsb_release -i" 2>&1 | egrep -i 'debian|ubuntu' | awk -F':' '{print $1}')
+elif [ "${REMOTE}" == "true" ]; then
+  # Build remote list
+  ALL_COMPUTERS=$REMOTE_COMPUTERS
 elif [ "${OTHER}" == "true" ]; then
   # Build other list
   ALL_COMPUTERS=$(echo -e "${ALL_COMPUTERS}" | pdsh -w - "lsb_release -i" 2>&1 | egrep -vi 'debian|ubuntu' | awk -F':' '{print $1}')
