@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+
+inventory | egrep -v 'pcd01|mapa.kristyandaaron.com' | pdsh -t 30 -w - \
+"apt-get update &&
+DEBIAN_FRONTEND=noninteractive \
+APT_LISTCHANGES_FRONTEND=none \
+apt-get \
+-o Dpkg::Options::="--force-confold" \
+-o Dpkg::Options::="--force-confdef" \
+--force-yes \
+-fuy \
+dist-upgrade"

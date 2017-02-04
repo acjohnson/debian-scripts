@@ -1,0 +1,11 @@
+#!/bin/bash
+#
+
+LOGFILE="/var/log/apt-get-dist-upgrade-non-interactive-all-servers.log"
+
+echo '' >> $LOGFILE
+date >> $LOGFILE
+echo '' >> $LOGFILE
+/root/apt-get-dist-upgrade-non-interactive-all-servers 2>&1 | dshbak | tee -a $LOGFILE
+echo '' >> $LOGFILE
+date >> $LOGFILE
