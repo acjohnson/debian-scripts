@@ -46,8 +46,7 @@ while [ "$1" != "" ]; do
   shift
 done
 
-source /root/venv/bin/activate
-export INVENTORY="citadel,ilke-master,ilke-k8s-1,ilke-k8s-2,ilke-k8s-3,ilke-k8s-4,nas,plex,transcode,transmission,mail"
+source $HOME/.debianscripts.conf
 
 if [[ $update == 'true' ]]; then
   CMD='ansible all -i $INVENTORY -m shell -b -a "apt update; apt list --upgradable"'
