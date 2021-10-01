@@ -5,7 +5,7 @@ usage() {
 
   cat << HEREDOC
 
-    Usage: $progname [update] [dist-upgrade] [autoremove] [--verbose] [--dry-run]
+    Usage: $progname [update] [dist-upgrade] [autoremove] [--verbose] [--serial] [--dry-run]
 
     positional argument:
       update               run apt update on all inventory nodes
@@ -15,6 +15,7 @@ usage() {
     optional arguments:
       -h, --help           show this help message and exit
       -v, --verbose        increase the verbosity of the bash script
+      --serial             run ansible command in serial
       --dry-run            do a dry run, dont change any files
 HEREDOC
   exit 0
@@ -26,17 +27,18 @@ fi
 
 while [ "$1" != "" ]; do
   case $1 in
-    update )          shift
-	              update="true"
-	              ;;
+    update )          update="true"
+                      ;;
     dist-upgrade )    dist_upgrade="true"
                       ;;
     autoremove )      autoremove="true"
                       ;;
-    -v | --verbose )  verbose="true"
-                      ;;
     -h | --help )     usage
                       exit 0
+                      ;;
+    -v | --verbose )  verbose="true"
+                      ;;
+    --serial )        serial="true"
                       ;;
     --dry-run )       dry_run="true"
                       ;;
@@ -48,41 +50,37 @@ done
 
 source $HOME/.debianscripts.conf
 
+ANSIBLE_ARGS=''
+if [[ $serial == 'true' ]]; then
+  ANSIBLE_ARGS="$ANSIBLE_ARGS --forks 1"
+fi
+if [[ $verbose == 'true' ]]; then
+  ANSIBLE_ARGS="$ANSIBLE_ARGS -vvv"
+fi
+
 if [[ $update == 'true' ]]; then
-  CMD='ansible all -i $INVENTORY -m shell -b -a "apt update; apt list --upgradable"'
+  CMD="ansible all -i $INVENTORY -m shell -b $ANSIBLE_ARGS -a \"apt update; apt list --upgradable\""
   if [[ $dry_run == 'true' ]]; then
     echo $CMD
   else
-    if [[ $verbose == 'true' ]]; then
-        eval "${CMD} -vvv"
-      else
-        eval $CMD
-    fi
+    eval $CMD
   fi
 fi
 
 if [[ $dist_upgrade == 'true' ]]; then
-  CMD='ansible all -i $INVENTORY -m shell -b -a "apt-get -o Dpkg::Options::=\"--force-confold\" -fuy dist-upgrade"'
+  CMD="ansible all -i $INVENTORY -m shell -b $ANSIBLE_ARGS -a \"apt-get -o Dpkg::Options::=\\\"--force-confold\\\" -fuy dist-upgrade\""
   if [[ $dry_run == 'true' ]]; then
     echo $CMD
   else
-    if [[ $verbose == 'true' ]]; then
-        eval "${CMD} -vvv"
-      else
-        eval $CMD
-    fi
+    eval $CMD
   fi
 fi
 
 if [[ $autoremove == 'true' ]]; then
-  CMD='ansible all -i $INVENTORY -m shell -b -a "apt autoremove --purge -y"'
+  CMD="ansible all -i $INVENTORY -m shell -b $ANSIBLE_ARGS -a \"apt autoremove --purge -y\""
   if [[ $dry_run == 'true' ]]; then
     echo $CMD
   else
-    if [[ $verbose == 'true' ]]; then
-        eval "${CMD} -vvv"
-      else
-        eval $CMD
-    fi
+    eval $CMD
   fi
 fi
