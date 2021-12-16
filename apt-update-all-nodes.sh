@@ -68,7 +68,7 @@ if [[ $update == 'true' ]]; then
 fi
 
 if [[ $dist_upgrade == 'true' ]]; then
-  CMD="ansible all -i $INVENTORY -m shell -b $ANSIBLE_ARGS -a \"apt-get -o Dpkg::Options::=\\\"--force-confold\\\" -fuy dist-upgrade\""
+  CMD="ansible all -i $INVENTORY -m shell -b $ANSIBLE_ARGS -a \"DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::=\\\"--force-confdef\\\" -o Dpkg::Options::=\\\"--force-confold\\\" -fuy dist-upgrade\""
   if [[ $dry_run == 'true' ]]; then
     echo $CMD
   else
