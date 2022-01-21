@@ -5,7 +5,7 @@ usage() {
 
   cat << HEREDOC
 
-    Usage: $progname [update] [dist-upgrade] [autoremove] [--verbose] [--serial] [--dry-run]
+    Usage: $progname [update] [dist-upgrade] [autoremove] [--ansible-group=group-name] [--verbose] [--serial] [--dry-run]
 
     positional argument:
       update               run apt update on a group of inventory nodes
