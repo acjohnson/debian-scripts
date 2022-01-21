@@ -8,11 +8,12 @@ usage() {
     Usage: $progname [update] [dist-upgrade] [autoremove] [--verbose] [--serial] [--dry-run]
 
     positional argument:
-      update               run apt update on all inventory nodes
-      dist-upgrade         run apt-get dist-upgrade on all inventory nodes
-      autoremove           run apt autoremote on all inventory nodes
+      update               run apt update on a group of inventory nodes
+      dist-upgrade         run apt-get dist-upgrade on a group of inventory nodes
+      autoremove           run apt autoremote on a group of inventory nodes
 
     optional arguments:
+      -g, --ansible-group  if unspecified the "all" group will be used by default
       -h, --help           show this help message and exit
       -v, --verbose        increase the verbosity of the bash script
       --serial             run ansible command in serial
@@ -32,6 +33,9 @@ while [ "$1" != "" ]; do
     dist-upgrade )    dist_upgrade="true"
                       ;;
     autoremove )      autoremove="true"
+                      ;;
+    -g=* | --ansible-group=*)
+                      ansible_group="${1#*=}"
                       ;;
     -h | --help )     usage
                       exit 0
@@ -58,8 +62,14 @@ if [[ $verbose == 'true' ]]; then
   ANSIBLE_ARGS="$ANSIBLE_ARGS -vvv"
 fi
 
+if [[ ! $ansible_group ]]; then
+  ANSIBLE_GROUP='all'
+else
+  ANSIBLE_GROUP=$ansible_group
+fi
+
 if [[ $update == 'true' ]]; then
-  CMD="ansible all -i $INVENTORY -m shell -b $ANSIBLE_ARGS -a \"apt update; apt list --upgradable\""
+  CMD="ansible $ANSIBLE_GROUP -i $INVENTORY -m shell -b $ANSIBLE_ARGS -a \"apt update; apt list --upgradable\""
   if [[ $dry_run == 'true' ]]; then
     echo $CMD
   else
@@ -68,7 +78,7 @@ if [[ $update == 'true' ]]; then
 fi
 
 if [[ $dist_upgrade == 'true' ]]; then
-  CMD="ansible all -i $INVENTORY -m shell -b $ANSIBLE_ARGS -a \"DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::=\\\"--force-confdef\\\" -o Dpkg::Options::=\\\"--force-confold\\\" -fuy dist-upgrade\""
+  CMD="ansible $ANSIBLE_GROUP -i $INVENTORY -m shell -b $ANSIBLE_ARGS -a \"DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::=\\\"--force-confdef\\\" -o Dpkg::Options::=\\\"--force-confold\\\" -fuy dist-upgrade\""
   if [[ $dry_run == 'true' ]]; then
     echo $CMD
   else
@@ -77,7 +87,7 @@ if [[ $dist_upgrade == 'true' ]]; then
 fi
 
 if [[ $autoremove == 'true' ]]; then
-  CMD="ansible all -i $INVENTORY -m shell -b $ANSIBLE_ARGS -a \"apt autoremove --purge -y\""
+  CMD="ansible $ANSIBLE_GROUP -i $INVENTORY -m shell -b $ANSIBLE_ARGS -a \"apt autoremove --purge -y\""
   if [[ $dry_run == 'true' ]]; then
     echo $CMD
   else
