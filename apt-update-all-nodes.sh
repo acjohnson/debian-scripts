@@ -5,12 +5,13 @@ usage() {
 
   cat << HEREDOC
 
-    Usage: $progname [update] [dist-upgrade] [autoremove] [--ansible-group=group-name] [--verbose] [--serial] [--dry-run]
+    Usage: $progname [update] [dist-upgrade] [autoremove] [autoclean] [--ansible-group=group-name] [--verbose] [--serial] [--dry-run]
 
     positional argument:
       update               run apt update on a group of inventory nodes
       dist-upgrade         run apt-get dist-upgrade on a group of inventory nodes
       autoremove           run apt autoremote on a group of inventory nodes
+      autoclean            run apt autoclean on a group of inventory nodes
 
     optional arguments:
       -g, --ansible-group  if unspecified the "all" group will be used by default
@@ -33,6 +34,8 @@ while [ "$1" != "" ]; do
     dist-upgrade )    dist_upgrade="true"
                       ;;
     autoremove )      autoremove="true"
+                      ;;
+    autoclean )       autoclean="true"
                       ;;
     -g=* | --ansible-group=*)
                       ansible_group="${1#*=}"
@@ -88,6 +91,15 @@ fi
 
 if [[ $autoremove == 'true' ]]; then
   CMD="ansible $ANSIBLE_GROUP -i $INVENTORY -m shell -b $ANSIBLE_ARGS -a \"apt autoremove --purge -y\""
+  if [[ $dry_run == 'true' ]]; then
+    echo $CMD
+  else
+    eval $CMD
+  fi
+fi
+
+if [[ $autoclean == 'true' ]]; then
+  CMD="ansible $ANSIBLE_GROUP -i $INVENTORY -m shell -b $ANSIBLE_ARGS -a \"apt autoclean\""
   if [[ $dry_run == 'true' ]]; then
     echo $CMD
   else
