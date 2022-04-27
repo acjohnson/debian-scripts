@@ -37,8 +37,11 @@ while [ "$1" != "" ]; do
                       ;;
     autoclean )       autoclean="true"
                       ;;
-    -g=* | --ansible-group=*)
+    -g=* | --ansible-group=* )
                       ansible_group="${1#*=}"
+                      ;;
+    -g | --ansible-group )
+                      ansible_group="$2"; shift
                       ;;
     -h | --help )     usage
                       exit 0
