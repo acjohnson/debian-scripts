@@ -58,7 +58,9 @@ while [ "$1" != "" ]; do
   shift
 done
 
-source $HOME/.debianscripts.conf
+if [ -z "${INVENTORY}" ]; then
+    source $HOME/.debianscripts.conf
+fi
 
 ANSIBLE_ARGS=''
 if [[ $serial == 'true' ]]; then
